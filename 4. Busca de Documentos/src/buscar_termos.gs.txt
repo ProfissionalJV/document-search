@@ -1,0 +1,52 @@
+// File: buscar_termos.gs (demo)
+function doGet() {
+  return HtmlService.createHtmlOutputFromFile('BuscarTermos')
+    .setTitle('Sistema de Busca (Demo)')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+function buscarTermosAvancados(pid, crc, ano, municipio, estado) {
+  pid = (pid || "").toString().trim().toLowerCase();
+  crc = (crc || "").toString().trim();
+  ano = (ano || "").toString().trim();
+  municipio = (municipio || "").toString().trim().toLowerCase();
+  estado = (estado || "").toString().trim().toLowerCase();
+
+  var aba = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Página2");
+  if (!aba) return [];
+
+  var dados = aba.getRange(2, 1, Math.max(0, aba.getLastRow() - 1), 8).getValues();
+  var resultados = [];
+
+  dados.forEach(function(linha) {
+    var linhaCRC = linha[0], nomePid = linha[1], linhaMunicipio = linha[2], linhaEstado = linha[3], uf = linha[4], linhaAno = linha[5], numTermo = linha[6], link = linha[7];
+
+    if (!link || link.toString().toUpperCase() === "NÃO ENCONTRADO") return;
+
+    var matchPID = !pid || (nomePid && nomePid.toString().toLowerCase().indexOf(pid) !== -1);
+    var matchCRC = !crc || (linhaCRC && linhaCRC.toString().indexOf(crc) !== -1);
+    var matchAno = !ano || (linhaAno && linhaAno.toString() === ano);
+    var matchMunicipio = !municipio || (linhaMunicipio && linhaMunicipio.toString().toLowerCase().indexOf(municipio) !== -1);
+    var matchEstado = !estado || (linhaEstado && linhaEstado.toString().toLowerCase().indexOf(estado) !== -1);
+
+    if (matchPID && matchCRC && matchAno && matchMunicipio && matchEstado) {
+      resultados.push({
+        crc: linhaCRC,
+        nomePid: nomePid,
+        municipio: linhaMunicipio,
+        estado: linhaEstado,
+        uf: uf,
+        ano: linhaAno,
+        numTermo: numTermo,
+        link: link
+      });
+    }
+  });
+
+  return resultados;
+}
+
+// Compatibilidade demo
+function buscarTermosPorPID(pid) {
+  return buscarTermosAvancados(pid, "", "", "", "");
+}
